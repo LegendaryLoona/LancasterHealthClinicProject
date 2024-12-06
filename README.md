@@ -1,4 +1,4 @@
-# Hospital Management Application
+# Automated Health Clinic Management
 
 ## Project Overview
 
