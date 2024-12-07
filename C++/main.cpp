@@ -8,6 +8,8 @@
 #include <sstream>
 #include <map>
 #include"classes.h"
+using namespace std;
+
 int main() {
     crow::SimpleApp app;
 
@@ -47,6 +49,20 @@ int main() {
         }
         response += "]";
         return crow::response(response);
+    });
+
+    //Route: Patient data entry
+    int patient_id = 1;
+    CROW_ROUTE(app, "/patient_add")([&patients, &patient_id](const crow::request& req) {
+        auto name = req.url_params.get("name");
+        auto age_en = req.url_params.get("age");
+        if (!name || !age_en) {
+            return crow::response(404, "Please enter data");
+        }
+        int age = stoi(age_en);
+        Patient patient(patient_id++, name, age);
+        patients.emplace_back(patient);
+        return crow::response("Patient add successfully, Patient ID:" + to_string(patient.id));
     });
 
     // Route: Get appointments for a single doctor
