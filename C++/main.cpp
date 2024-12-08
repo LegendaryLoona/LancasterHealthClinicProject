@@ -7,6 +7,7 @@
 #include <ctime>
 #include <sstream>
 #include <map>
+#include <algorithm>
 #include"classes.h"
 using namespace std;
 
@@ -63,6 +64,31 @@ int main() {
         Patient patient(patient_id++, name, age);
         patients.emplace_back(patient);
         return crow::response("Patient add successfully, Patient ID:" + to_string(patient.id));
+    });
+
+    CROW_ROUTE(app, "/patient_add_mh")([&patients](const crow::request& req){
+        auto id = req.url_params.get("id");
+        auto doctor = req.url_params.get("doctor");
+        auto date = req.url_params.get("date");
+        auto detail = req.url_params.get("detail");
+        if (!id || !doctor || !date || !detail) {
+            return crow::response(404, "Please enter data.");
+        }
+        int p_id = stoi(id);
+        auto p_match = find_if(patients.begin(), patients.end(), [p_id](const Patient& patient) {
+            return patient.id == p_id;
+        });
+        if (p_match == patients.end()) {
+            return crow::response(404, "Please enter correct patient ID.");
+        }
+        tm date_tr = {};
+        istringstream(date) >> std::get_time(&date_tr, "%Y-%m-%d %H:%M");
+
+        string doctorn = doctor;
+        string detailn = detail;
+        MedicalHistory mh(doctorn, date_tr, detailn);
+        p_match->medicalhistory_add(mh);
+        return crow::response("Enter successfully!");
     });
 
     // Route: Get appointments for a single doctor

@@ -6,21 +6,55 @@
 #include <ctime>
 #include <sstream>
 #include <map>
+using namespace std;
+
+class MedicalHistory {
+public:                    
+    string doctor;
+    tm date;
+    string detail;
+    // Constructor
+    MedicalHistory(string doctor, tm& date, string detail)
+        : doctor(doctor), date(date), detail(detail) {}
+    // JSON-like format
+    string to_json() const {
+        char mid[50];
+        strftime (mid, sizeof(mid), "%Y-%m-%d %H:%M", &date);
+        return "{ \"doctor\": " + doctor +
+               "\", \"date\": \"" + mid +
+               "\", \"detail\": \"" + detail + "\"}";
+    }
+};
+
 
 
 class Patient {
 public:
     int id;                    
-    std::string name;          
+    std::string name;
     int age;
+    vector<MedicalHistory> medicalhistory;
     // Constructor
     Patient(int id, std::string name, int age)
         : id(id), name(name), age(age){}
+    // Add medical history
+    void medicalhistory_add(const MedicalHistory& mh_new) {
+        medicalhistory.push_back(mh_new);
+    }
     // Method to convert Doctor details to JSON-like format
-    std::string to_json() const {
-        return "{ \"id\": " + std::to_string(id) +
-               "\", \"name\": \"" + name +
-               "\", \"age\": \"" + std::to_string(age) + "\"}";
+    string to_json() const {
+        string json = "{ \"id\": " + std::to_string(id) +
+                    "\", \"name\": \"" + name +
+                    "\", \"age\": \"" + std::to_string(age) +
+                    "\", \"MedicalHistory\": [";
+        for (int i = 0; i < medicalhistory.size(); ++i) {
+            json += medicalhistory[i].to_json();
+            if (i < medicalhistory.size() - 1) {
+                json += ", ";
+            }
+        }
+        json += "] }";
+        return json;
     }
 };
 
