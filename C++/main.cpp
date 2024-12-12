@@ -42,6 +42,17 @@ int main() {
         return crow::response(response);
     });
 
+    CROW_ROUTE(app, "/patient/")([&patients](const crow::request& req) {
+        auto patient_id = req.url_params.get("id");
+        auto patient = std::find_if(patients.begin(), patients.end(), [patient_id](const Patient& pat) {
+        return pat.id == std::stoi(patient_id);
+        });
+        if (patient == patients.end()) {
+            return crow::response(404, "Patient not found");
+        }
+        return crow::response(patient->to_json());
+    });
+
     CROW_ROUTE(app, "/doctors")([&doctors]() {
         std::string response = "[";
         for (size_t i = 0; i < doctors.size(); ++i) {
@@ -134,6 +145,35 @@ int main() {
         }
     });
 
+
+CROW_ROUTE(app, "/add_prescription/")([&doctors, &patients](const crow::request& req) {
+    auto patient_id = req.url_params.get("patient_id");
+    auto doctors_id = req.url_params.get("doctors_id");
+    auto prescription_name = req.url_params.get("prescription_name");
+
+    if (!patient_id || !doctors_id || !prescription_name) {
+        return crow::response("Please enter the required data");
+    }
+
+    try {
+        auto doctor = std::find_if(doctors.begin(), doctors.end(), [doctors_id](const Doctor& doc) {
+            return doc.id == std::stoi(doctors_id);
+        });
+        if (doctor == doctors.end()) {
+            return crow::response(404, "Doctor not found");
+        }
+        auto patient = std::find_if(patients.begin(), patients.end(), [patient_id](const Patient& pat) {
+            return pat.id == std::stoi(patient_id);
+        });
+        if (patient == patients.end()) {
+            return crow::response(404, "Patient not found");
+        }
+        patient->add_prescription(prescription_name, doctor->name);
+        return crow::response("Prescription added successfully");
+    } catch (...) {
+        return crow::response("An  error occurred");
+    }
+});
     // Start the server
     app.port(18080).multithreaded().run();
 }
