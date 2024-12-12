@@ -13,16 +13,19 @@ This repository contains a Crow-based web application designed as a project for 
 
 ### Use Case UML
 
-![](https://github.com/LegendaryLoona/Lancaster2ndproject/blob/main/UMLs/Use%20case%20diagram.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Class%20Diagram.png)
 
 ### Class UML
 
-![](https://github.com/LegendaryLoona/Lancaster2ndproject/blob/main/UMLs/Class%20diagram.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Use%20Case%20Diagram.png)
 
 ### Sequence UMLs
 
-![](https://github.com/LegendaryLoona/Lancaster2ndproject/blob/main/UMLs/Sequence%20diagram%20for%20creating%20doctor%20profiles.png)
-![](https://github.com/LegendaryLoona/Lancaster2ndproject/blob/main/UMLs/Sequence%20diagram%20for%20managing%20profiles%20or%20appointments.png)
-![](https://github.com/LegendaryLoona/Lancaster2ndproject/blob/main/UMLs/Sequence%20diagram%20for%20registering%20patients.png)
-![](https://github.com/LegendaryLoona/Lancaster2ndproject/blob/main/UMLs/Sequence%20diagram%20for%20viewing%20list%20of%20appointments.png)
-![](https://github.com/LegendaryLoona/Lancaster2ndproject/blob/main/UMLs/Sequence%20diagram%20for%20booking%20appointments.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20registering%20patients.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20creating%20a%20doctor's%20profile.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20booking%20an%20appointment.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20viewing%20list%20of%20appointments.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20managing%20profiles%20or%20appointments.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20updating%20medical%20history.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20retrieving%20patient's%20medical%20history.png)
+![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20recording%20prescriptions.png)
