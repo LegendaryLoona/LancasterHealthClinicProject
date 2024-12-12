@@ -41,6 +41,9 @@ public:
     void medicalhistory_add(const MedicalHistory& mh_new) {
         medicalhistory.push_back(mh_new);
     }
+    const vector<MedicalHistory>& medicalhistory_get() {
+        return medicalhistory;
+    }
     // Method to convert Doctor details to JSON-like format
     string to_json() const {
         string json = "{ \"id\": " + std::to_string(id) +

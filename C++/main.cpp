@@ -91,6 +91,42 @@ int main() {
         return crow::response("Enter successfully!");
     });
 
+    //Route: Retireve patient’s medical history
+    CROW_ROUTE(app, "/patient_mh")([&patients](const crow::request& req){
+        auto id = req.url_params.get("id");
+        auto doctor = req.url_params.get("doctor");
+        auto date = req.url_params.get("date");
+        if (!id) {
+            return crow::response(404, "Please enter data.");
+        }
+        int p_id = stoi(id);
+        auto p_match = find_if(patients.begin(), patients.end(), [p_id](const Patient& patient) {
+            return patient.id == p_id;
+        });
+        if (p_match == patients.end()) {
+            return crow::response(404, "Please enter correct patient ID.");
+        }
+        string list = "Here is the compliant medical history(Empty means no records found):";
+        auto datas = p_match->medicalhistory_get();
+        for (auto data : datas) {
+            bool search =true;
+            if(doctor&&data.doctor != doctor) {
+                search = false;
+            }
+            if(date) {
+                tm date_tr = {};
+                istringstream(date) >> std::get_time(&date_tr, "%Y-%m-%d %H:%M");
+                if (mktime(&date_tr) != mktime(&data.date)) {
+                    search = false;
+                }
+            }
+            if (search) {
+                list += data.to_json() + ", ";
+            }
+        }
+        return crow::response(list);
+    });
+
     // Route: Get appointments for a single doctor
     CROW_ROUTE(app, "/view_appointments/")([&doctors](const crow::request& req) {
         auto id = req.url_params.get("id");
