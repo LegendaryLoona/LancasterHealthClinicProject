@@ -34,18 +34,48 @@ public:
     std::string name;
     int age;
     vector<MedicalHistory> medicalhistory;
+        struct Prescription {
+        std::string doctor_name;
+        std::string date_time; 
+    };
+    std::map<std::string, Prescription> prescriptions;
+
     // Constructor
     Patient(int id, std::string name, int age)
-        : id(id), name(name), age(age){}
-    // Add medical history
+        : id(id), name(name), age(age) {}
+
+    void add_prescription(const std::string& prescription_name, const std::string& doctor_name) {
+        std::time_t t = std::time(nullptr);
+        std::tm* now = std::localtime(&t);
+        std::ostringstream time_stream;
+        time_stream << std::put_time(now, "%Y-%m-%d %H:%M:%S");
+        prescriptions[prescription_name] = {doctor_name, time_stream.str()};
+    }
+
+    std::string prescriptions_to_json() const {
+    std::string json = "{";
+    for (auto it = prescriptions.begin(); it != prescriptions.end(); ++it) {
+        json += "\"" + it->first + "\": { \"doctor\": \"" + it->second.doctor_name +
+                "\", \"date_time\": \"" + it->second.date_time + "\" }";
+        if (std::next(it) != prescriptions.end()) {
+            json += ", "; 
+        }
+    }
+    json += "}"; 
+    return json;
+    }
+
     void medicalhistory_add(const MedicalHistory& mh_new) {
         medicalhistory.push_back(mh_new);
     }
-    // Method to convert Doctor details to JSON-like format
+
+
+
     string to_json() const {
         string json = "{ \"id\": " + std::to_string(id) +
                     "\", \"name\": \"" + name +
                     "\", \"age\": \"" + std::to_string(age) +
+                    "\", \"Prescriptions\": \"" + prescriptions_to_json() +
                     "\", \"MedicalHistory\": [";
         for (int i = 0; i < medicalhistory.size(); ++i) {
             json += medicalhistory[i].to_json();
