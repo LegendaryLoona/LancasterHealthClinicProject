@@ -26,7 +26,32 @@ public:
     }
 };
 
+class Bill {
+public:
+    string billid;
+    string amount;
+    tm date;
+    string detail;
+    bool insurance_claim;
+    // Constructor
+    Bill(string billid, string amount, tm& date, string detail)
+        : billid(billid), amount(amount), date(date), detail(detail), insurance_claim(false) {}
 
+    void insurance_submit() {
+        insurance_claim = true;
+    }
+
+    // JSON-like format
+    string to_json() const {
+        char mid[50];
+        strftime (mid, sizeof(mid), "%Y-%m-%d %H:%M", &date);
+        return "{ \"billid\": " + billid +
+               "\", \"amount\": " + amount +
+               "\", \"date\": \"" + mid +
+               "\", \"detail\": \"" + detail + 
+               "\", \"insurance_status\": " + (insurance_claim ? "true" : "false") + "\" }";
+    }
+};
 
 class Patient {
 public:
@@ -34,6 +59,7 @@ public:
     std::string name;
     int age;
     vector<MedicalHistory> medicalhistory;
+    vector<Bill> bill;
         struct Prescription {
         std::string doctor_name;
         std::string date_time; 
@@ -71,6 +97,15 @@ public:
     const vector<MedicalHistory>& medicalhistory_get() {
         return medicalhistory;
     }
+
+    void bill_add(const Bill& bill_new) {
+        bill.push_back(bill_new);
+    }
+
+    const vector<Bill>& bill_get() {
+        return bill;
+    }
+
     // Method to convert Doctor details to JSON-like format
     string to_json() const {
         string json = "{ \"id\": " + std::to_string(id) +
@@ -81,6 +116,13 @@ public:
         for (int i = 0; i < medicalhistory.size(); ++i) {
             json += medicalhistory[i].to_json();
             if (i < medicalhistory.size() - 1) {
+                json += ", ";
+            }
+        }
+        json += "], \"Bill\": [";
+        for (int i = 0; i < bill.size(); ++i) {
+            json += bill[i].to_json();
+            if (i < bill.size() - 1) {
                 json += ", ";
             }
         }
