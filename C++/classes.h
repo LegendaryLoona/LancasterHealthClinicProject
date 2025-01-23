@@ -258,8 +258,7 @@ void createTables(sqlite3* db) {
     CREATE TABLE IF NOT EXISTS patients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        age INTEGER NOT NULL,
-        insurance TEXT NOT NULL
+        age INTEGER NOT NULL
         );
 
     CREATE TABLE IF NOT EXISTS doctors (
@@ -332,7 +331,7 @@ std::vector<Doctor> fetchDoctors(sqlite3 *db) {
 // Fetch all patients from the database
 std::vector<Patient> fetchPatients(sqlite3 *db) {
     std::vector<Patient> patients;
-    const char *sql = "SELECT id, name, age, insurance FROM patients;";
+    const char *sql = "SELECT id, name, age FROM patients;";
     sqlite3_stmt *stmt;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -344,9 +343,8 @@ std::vector<Patient> fetchPatients(sqlite3 *db) {
         int id = sqlite3_column_int(stmt, 0);
         std::string name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
         int age = sqlite3_column_int(stmt, 2);
-        std::string insurance = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
 
-        patients.emplace_back(id, name, age, insurance);
+        patients.emplace_back(id, name, age);
     }
 
     sqlite3_finalize(stmt);
