@@ -8,21 +8,61 @@
 #include <map>
 using namespace std;
 
+class Prescription {
+public:
+    string patient;
+    string doctor;
+    tm date;
+    string medname;
+    string amount;
+    string duration;
+    //Constructor
+    Prescription(string patient, string doctor, tm& date, string medname, string amount, string duration)
+        : patient(patient), doctor(doctor), date(date), medname(medname), amount(amount), duration(duration) {}
+    // JSON-like format
+    string to_json() const {
+        char mid[50];
+        strftime (mid, sizeof(mid), "%Y-%m-%d %H:%M", &date);
+        return  "{ \"patient\": " + patient +
+                "\", \"doctor\": \"" + doctor +
+                "\", \"date\": \"" + mid +
+                "\", \"medname\": \"" + medname +
+                "\", \"amount\": \"" + amount +
+                "\", \"duration\": \"" + duration + "\"}";
+    }
+
+};
+
 class MedicalHistory {
 public:                    
     string doctor;
     tm date;
     string detail;
+    vector<Prescription> prescription;
     // Constructor
     MedicalHistory(string doctor, tm& date, string detail)
         : doctor(doctor), date(date), detail(detail) {}
+    
+    void prescription_add(const Prescription& pres_new) {
+        prescription.push_back(pres_new);
+    }
+    const vector<Prescription>& prescription_get() {
+        return prescription;
+    }
     // JSON-like format
     string to_json() const {
         char mid[50];
         strftime (mid, sizeof(mid), "%Y-%m-%d %H:%M", &date);
-        return "{ \"doctor\": " + doctor +
+        string json =  "{ \"doctor\": " + doctor +
                "\", \"date\": \"" + mid +
-               "\", \"detail\": \"" + detail + "\"}";
+               "\", \"detail\": \"" + detail +
+               "\", \"Prescriptions\": [";
+        for (int i = 0; i < prescription.size(); ++i) {
+            json += prescription[i].to_json();
+            if (i < prescription.size() - 1) {
+                json += ", ";
+            }
+        }       
     }
 };
 
@@ -70,27 +110,6 @@ public:
     Patient(int id, std::string name, int age)
         : id(id), name(name), age(age) {}
 
-    void add_prescription(const std::string& prescription_name, const std::string& doctor_name) {
-        std::time_t t = std::time(nullptr);
-        std::tm* now = std::localtime(&t);
-        std::ostringstream time_stream;
-        time_stream << std::put_time(now, "%Y-%m-%d %H:%M:%S");
-        prescriptions[prescription_name] = {doctor_name, time_stream.str()};
-    }
-
-    std::string prescriptions_to_json() const {
-    std::string json = "{";
-    for (auto it = prescriptions.begin(); it != prescriptions.end(); ++it) {
-        json += "\"" + it->first + "\": { \"doctor\": \"" + it->second.doctor_name +
-                "\", \"date_time\": \"" + it->second.date_time + "\" }";
-        if (std::next(it) != prescriptions.end()) {
-            json += ", "; 
-        }
-    }
-    json += "}"; 
-    return json;
-    }
-
     void medicalhistory_add(const MedicalHistory& mh_new) {
         medicalhistory.push_back(mh_new);
     }
@@ -106,12 +125,11 @@ public:
         return bill;
     }
 
-    // Method to convert Doctor details to JSON-like format
+    // Method to convert Patient details to JSON-like format
     string to_json() const {
         string json = "{ \"id\": " + std::to_string(id) +
                     "\", \"name\": \"" + name +
                     "\", \"age\": \"" + std::to_string(age) +
-                    "\", \"Prescriptions\": \"" + prescriptions_to_json() +
                     "\", \"MedicalHistory\": [";
         for (int i = 0; i < medicalhistory.size(); ++i) {
             json += medicalhistory[i].to_json();

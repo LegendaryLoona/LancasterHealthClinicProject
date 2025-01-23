@@ -259,8 +259,10 @@ CROW_ROUTE(app, "/add_prescription/")([&doctors, &patients](const crow::request&
     auto patient_id = req.url_params.get("patient_id");
     auto doctors_id = req.url_params.get("doctors_id");
     auto prescription_name = req.url_params.get("prescription_name");
+    auto prescription_amount = req.url_params.get("amount");
+    auto prescription_duration = req.url_params.get("duration");
 
-    if (!patient_id || !doctors_id || !prescription_name) {
+    if (!patient_id || !doctors_id || !prescription_name || !prescription_amount || prescription_duration) {
         return crow::response("Please enter the required data");
     }
 
@@ -277,7 +279,22 @@ CROW_ROUTE(app, "/add_prescription/")([&doctors, &patients](const crow::request&
         if (patient == patients.end()) {
             return crow::response(404, "Patient not found");
         }
-        patient->add_prescription(prescription_name, doctor->name);
+        
+        tm current_time = {};
+        time_t now = time(nullptr);
+        current_time = *localtime(&now);
+
+        Prescription new_prescription(patient->name, doctor->name, current_time, prescription_name, prescription_amount, prescription_duration);
+        if (!patient->medicalhistory.empty()) {
+            patient->medicalhistory.back().prescription_add(new_prescription);
+        }
+        else {
+            MedicalHistory mh(doctor->name, current_time, "Prescription added");
+            mh.prescription_add(new_prescription);
+            patient->medicalhistory_add(mh);
+        }
+        
+
         return crow::response("Prescription added successfully");
     } catch (...) {
         return crow::response("An  error occurred");
