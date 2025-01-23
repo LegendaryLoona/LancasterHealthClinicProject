@@ -54,6 +54,32 @@ public:
     }
 };
 
+
+class Supply {
+public:
+    int id;
+    std::string name;
+    int num;
+    int min_num;
+
+    // Constructor
+    Supply(int id, std::string name, int num, int min_num)
+        : id(id), name(name), num(num), min_num(min_num) {}
+
+    // JSON-like format
+    std::string to_json() const {
+        return "{ \"id\": " + std::to_string(id) +
+               ", \"name\": \"" + name +
+               "\", \"quantity\": " + std::to_string(num) +
+               ", \"minimum value\": " + std::to_string(min_num) +
+               " }";
+    }
+    // Stock low
+    bool track() const {
+        return num < min_num;
+    }
+};
+
 class Patient {
 public:
     int id;                    
@@ -227,6 +253,14 @@ void createTables(sqlite3* db) {
         end_time TEXT NOT NULL
         );
 
+    CREATE TABLE IF NOT EXISTS supply (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        num INTEGER NOT NULL,
+        min_num INTEGER NOT NULL
+        );
+
+
     CREATE TABLE IF NOT EXISTS appointments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         patient_id INTEGER NOT NULL,
@@ -301,4 +335,79 @@ std::vector<Patient> fetchPatients(sqlite3 *db) {
     sqlite3_finalize(stmt);
     return patients;
 }
+
+// Fetch all supply from the database
+std::vector<Supply> fetchSupply(sqlite3 *db) {
+    std::vector<Supply> supply;
+    const char *sql = "SELECT id, name, num, min_num FROM supply;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(db) << std::endl;
+        return supply;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+        int num = sqlite3_column_int(stmt, 2);
+        int min_num = sqlite3_column_int(stmt, 3);
+
+        supply.emplace_back(id, name, num, min_num);
+    }
+
+    sqlite3_finalize(stmt);
+    return supply;
+}
+
+void addSupply(sqlite3 *db, const std::string &name, int num, int min_num) {
+    const char *sql = "INSERT INTO supply (name, num, min_num) VALUES (?, ?, ?);";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 2, num) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 3, min_num) != SQLITE_OK) {
+        std::cerr << "Error binding values: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
+    } else {
+        std::cout << "New supply added successfully!" << std::endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+void SupplyUp(sqlite3 *db, int id, int new_num) {
+    const char *sql = "UPDATE supply SET num = ? WHERE id = ?;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    if (sqlite3_bind_int(stmt, 1, new_num) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 2, id) != SQLITE_OK) {
+        std::cerr << "Error binding values: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
+    } else {
+        std::cout << "Supply number updated successfully!" << std::endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 
