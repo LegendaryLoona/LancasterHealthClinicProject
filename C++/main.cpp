@@ -14,27 +14,39 @@ using namespace std;
 int main() {
     crow::SimpleApp app;
 
+    sqlite3* db;
+    if (sqlite3_open("hospital.db", &db) != SQLITE_OK) {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+    createTables(db);
+    const std::string insertPatientsSQL = R"(
+    INSERT OR REPLACE INTO Patients (id, name, age) VALUES
+    (1, 'John Hopf', 55),
+    (2, 'Allison Wern', 44),
+    (3, 'Sir Munhausen', 33);
+    )";
+    executeSQL(db, insertPatientsSQL);
+    const std::string insertDoctorsSQL = R"(
+    INSERT OR REPLACE INTO Doctors (id, name, specialization, start_time, end_time) VALUES
+    (1, "Dr. NotAlice Smith", "Cardiology", "9:00", "18:00"),
+    (2, "Dr. Bob Jones", "Neurology", "9:00", "18:00"),
+    (3, "Dr. Carol White", "Pediatrics", "9:00", "18:00");
+    )";
+    executeSQL(db, insertDoctorsSQL);
+    std::vector<std::string> reminds;
+    std::vector<Patient> patients = fetchPatients(db);
+    std::vector<Doctor> doctors = fetchDoctors(db);
+    std::vector<Supply> supply = fetchSupply(db);
+
+    sqlite3_close(db);
+
     // Default route
     CROW_ROUTE(app, "/")([]() {
         return "Welcome to the appointment booking system";
     });
 
-    // Sample doctors
-    std::vector<Doctor> doctors = {
-        Doctor(1, "Dr. Alice Smith", "Cardiology", "9:00", "18:00"),
-        Doctor(2, "Dr. Bob Jones", "Neurology", "9:00", "18:00"),
-        Doctor(3, "Dr. Carol White", "Pediatrics", "9:00", "18:00")
-    };
-    std::vector<Patient> patients = {
-        // Patient(1, "John Hopf", 55),
-        // Patient(2, "Allison Wern", 44),
-        // Patient(3, "Sir Munhausen", 33)
-    };
-    std::vector<Supply> supply = {
-    };
-    std::vector<std::string> reminds;
-
-     // Route: Get all supply
+    // Route: Get all supply
     CROW_ROUTE(app, "/supply")([&supply]() {
         std::string response = "[";
         for (size_t i = 0; i < supply.size(); ++i) {
@@ -46,18 +58,27 @@ int main() {
     });
 
     //Route: Supply entry
-    int supply_id = 1;
-    CROW_ROUTE(app, "/supply_add")([&supply, &supply_id](const crow::request& req) {
+    CROW_ROUTE(app, "/supply_add")([&supply](const crow::request& req) {
         auto name = req.url_params.get("name");
         auto num_en = req.url_params.get("num");
         auto min_num_en = req.url_params.get("min");
+        int supply_id = 0;
+        if (not supply.empty()){
+            int supply_id = supply.back().id;
+        }
+        
         if (!name || !num_en || !min_num_en) {
             return crow::response(404, "Please enter data");
         }
         int num = stoi(num_en);
         int min_num = stoi(min_num_en);
-        Supply supply_n(supply_id++, name, num, min_num);
+        Supply supply_n(supply_id+1, name, num, min_num);
         supply.emplace_back(supply_n);
+
+        sqlite3* db;
+        int rc = sqlite3_open("hospital.db", &db);
+        addSupply(db, name, num, min_num);
+        sqlite3_close(db);
         return crow::response("Supply add successfully, supply ID:" + to_string(supply_n.id));
     });
 
@@ -79,6 +100,11 @@ int main() {
                     std::string remind = "Warning: Item with ID " + std::to_string(id) + " is low on stock!";
                     reminds.push_back(remind);
                 }
+
+                sqlite3* db;
+                int rc = sqlite3_open("hospital.db", &db);
+                SupplyUp(db, id, num_up);
+                sqlite3_close(db);
                 return crow::response("Supply ID " + std::to_string(id) + "Updated successfully ");
             }
         }
