@@ -6,6 +6,7 @@
 #include <ctime>
 #include <sstream>
 #include <map>
+#include <sqlite3.h>
 using namespace std;
 
 class Prescription {
