@@ -155,17 +155,20 @@ int main() {
     });
 
     //Route: Patient data entry
-    int patient_id = 1;
-    CROW_ROUTE(app, "/patient_add")([&patients, &patient_id](const crow::request& req) {
+    CROW_ROUTE(app, "/patient_add")([&patients](const crow::request& req) {
         auto name = req.url_params.get("name");
         auto age_en = req.url_params.get("age");
+        int patient_id = 0;
+        if (not patients.empty()){
+            patient_id = patients.back().id;
+        }
         if (!name || !age_en) {
             return crow::response(404, "Please enter data");
         }
         int age = stoi(age_en);
-        Patient patient(patient_id++, name, age);
+        Patient patient(patient_id+1, name, age);
         patients.emplace_back(patient);
-        return crow::response("Patient add successfully, Patient ID:" + to_string(patient.id));
+        return crow::response("Patient add successfully, Patient ID:" + to_string(patient.id+1));
     });
 
     CROW_ROUTE(app, "/patient_add_mh")([&patients](const crow::request& req){
