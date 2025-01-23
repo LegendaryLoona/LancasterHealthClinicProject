@@ -9,6 +9,15 @@ This repository contains a Crow-based web application designed as a project for 
 * Laurent Bialylew
 * Wenhao Xie
 
+## Requirements
+* [Crow](https://crowcpp.org/master/getting_started/setup/linux/)
+* [SQLite](https://www.sqlite.org/download.html)
+
+## Building and Running
+* open your terminal and run: g++ main.cpp -lpthread -lsqlite3
+* after that run: ./a.out
+
+  
 ## Below you can find our UMLs
 
 ### Use Case UML
