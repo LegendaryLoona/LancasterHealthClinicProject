@@ -9,10 +9,37 @@
 #include <map>
 #include <algorithm>
 #include"classes.h"
+#include <sqlite3.h>
 using namespace std;
 
 int main() {
     crow::SimpleApp app;
+
+    sqlite3* db;
+    if (sqlite3_open("hospital.db", &db) != SQLITE_OK) {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+    createTables(db);
+    const std::string insertPatientsSQL = R"(
+    INSERT OR REPLACE INTO Patients (id, name, age, insurance) VALUES
+    (1, 'John Hopf', 55, 'None'),
+    (2, 'Allison Wern', 44, 'TK'),
+    (3, 'Sir Munhausen', 33, 'Barmer');
+    )";
+    executeSQL(db, insertPatientsSQL);
+    const std::string insertDoctorsSQL = R"(
+    INSERT OR REPLACE INTO Doctors (id, name, specialization, start_time, end_time) VALUES
+    (1, "Dr. NotAlice Smith", "Cardiology", "9:00", "18:00"),
+    (2, "Dr. Bob Jones", "Neurology", "9:00", "18:00"),
+    (3, "Dr. Carol White", "Pediatrics", "9:00", "18:00");
+    )";
+    executeSQL(db, insertDoctorsSQL);
+
+    std::vector<Patient> patients = fetchPatients(db);
+    std::vector<Doctor> doctors = fetchDoctors(db);
+
+    sqlite3_close(db);
 
     // Default route
     CROW_ROUTE(app, "/")([]() {
@@ -20,16 +47,17 @@ int main() {
     });
 
     // Sample doctors
-    std::vector<Doctor> doctors = {
-        Doctor(1, "Dr. Alice Smith", "Cardiology", "9:00", "18:00"),
-        Doctor(2, "Dr. Bob Jones", "Neurology", "9:00", "18:00"),
-        Doctor(3, "Dr. Carol White", "Pediatrics", "9:00", "18:00")
-    };
-    std::vector<Patient> patients = {
-        Patient(1, "John Hopf", 55),
-        Patient(2, "Allison Wern", 44),
-        Patient(3, "Sir Munhausen", 33)
-    };
+
+    // std::vector<Doctor> doctors = {
+    //     Doctor(1, "Dr. Alice Smith", "Cardiology", "9:00", "18:00"),
+    //     Doctor(2, "Dr. Bob Jones", "Neurology", "9:00", "18:00"),
+    //     Doctor(3, "Dr. Carol White", "Pediatrics", "9:00", "18:00")
+    // };
+    // std::vector<Patient> patients = {
+    //     Patient(1, "John Hopf", 55, "None"),
+    //     Patient(2, "Allison Wern", 44, "TK"),
+    //     Patient(3, "Sir Munhausen", 33, "Barmer")
+    // };
 
     // Route: Get all doctors
     CROW_ROUTE(app, "/patients")([&patients]() {
@@ -68,14 +96,17 @@ int main() {
     CROW_ROUTE(app, "/patient_add")([&patients, &patient_id](const crow::request& req) {
         auto name = req.url_params.get("name");
         auto age_en = req.url_params.get("age");
+        auto insurance = req.url_params.get("insurance");
         if (!name || !age_en) {
             return crow::response(404, "Please enter data");
         }
         int age = stoi(age_en);
-        Patient patient(patient_id++, name, age);
+        std::string insurance_str = insurance ? insurance : "Self-Pay";
+        Patient patient(patient_id++, name, age, insurance_str);
         patients.emplace_back(patient);
-        return crow::response("Patient add successfully, Patient ID:" + to_string(patient.id));
+        return crow::response("Patient added successfully, Patient ID: " + to_string(patient.id));
     });
+
 
     CROW_ROUTE(app, "/patient_add_mh")([&patients](const crow::request& req){
         auto id = req.url_params.get("id");
@@ -102,17 +133,135 @@ int main() {
         return crow::response("Enter successfully!");
     });
 
-    // Route: Get appointments for a single doctor
-    CROW_ROUTE(app, "/view_appointments/")([&doctors](const crow::request& req) {
+    //Route: Retireve patient’s medical history
+    CROW_ROUTE(app, "/patient_mh")([&patients](const crow::request& req){
         auto id = req.url_params.get("id");
-        for (const auto& doctor : doctors) {
-            if (doctor.id == std::stoi(id)) {
-                return crow::response(doctor.appointments_to_json());
+        auto doctor = req.url_params.get("doctor");
+        auto date = req.url_params.get("date");
+        if (!id) {
+            return crow::response(404, "Please enter data.");
+        }
+        int p_id = stoi(id);
+        auto p_match = find_if(patients.begin(), patients.end(), [p_id](const Patient& patient) {
+            return patient.id == p_id;
+        });
+        if (p_match == patients.end()) {
+            return crow::response(404, "Please enter correct patient ID.");
+        }
+        string list = "Here is the compliant medical history(Empty means no records found):";
+        auto datas = p_match->medicalhistory_get();
+        for (auto data : datas) {
+            bool search =true;
+            if(doctor&&data.doctor != doctor) {
+                search = false;
+            }
+            if(date) {
+                tm date_tr = {};
+                istringstream(date) >> std::get_time(&date_tr, "%Y-%m-%d %H:%M");
+                if (mktime(&date_tr) != mktime(&data.date)) {
+                    search = false;
+                }
+            }
+            if (search) {
+                list += data.to_json() + ", ";
             }
         }
-        return crow::response(404, "Doctor not found");
+        return crow::response(list);
     });
 
+    //Route: All patient's bill(?id=&billid=&amount=&date=&detail=)
+CROW_ROUTE(app, "/patient_add_bill")([&patients](const crow::request& req) {
+    auto id = req.url_params.get("id");
+    auto billid = req.url_params.get("billid");
+    auto amount = req.url_params.get("amount");
+    auto date = req.url_params.get("date");
+    auto detail = req.url_params.get("detail");
+
+    if (!id || !billid || !amount || !date || !detail) {
+        return crow::response(404, "Please enter complete data.");
+    }
+    int p_id = stoi(id);
+    auto p_match = find_if(patients.begin(), patients.end(), [p_id](const Patient& patient) {
+        return patient.id == p_id;
+    });
+    if (p_match == patients.end()) {
+        return crow::response(404, "Patient not found.");
+    }
+
+    tm date_tr = {};
+    istringstream(date) >> std::get_time(&date_tr, "%Y-%m-%d %H:%M");
+    Bill bill(billid, amount, date_tr, detail);
+
+    if (p_match->insurance != "None") {
+        bill.insurance_submit(); // Mark as submitted to insurance
+        p_match->bill_add(bill);
+        return crow::response("Bill submitted to insurance: " + p_match->insurance);
+    } else {
+        p_match->bill_add(bill); // Add as self-pay
+        return crow::response("Self-pay bill added successfully.");
+    }
+});
+
+
+    //Route: Retrieve patient's bills (?id=)
+    CROW_ROUTE(app, "/patient_bill")([&patients](const crow::request& req) {
+        auto id = req.url_params.get("id");
+        if (!id) {
+            return crow::response(404, "Please enter the patient ID.");
+        }
+        int p_id = stoi(id);
+        auto p_match = find_if(patients.begin(), patients.end(), [p_id](const Patient& patient) {
+            return patient.id == p_id;
+        });
+        if (p_match == patients.end()) {
+            return crow::response(404, "Patient not found.");
+        }
+        string list = "[";
+        auto bills = p_match->bill_get();
+        for (size_t i = 0; i < bills.size(); ++i) {
+            list += bills[i].to_json();
+            if (i < bills.size() - 1) {
+                list += ", ";
+            }
+        }
+        list += "]";
+        return crow::response(list);
+    });
+
+    //Route: Submit insurance (?id=&billid=)
+    CROW_ROUTE(app, "/patient_ins")([&patients](const crow::request& req) {
+        auto id = req.url_params.get("id");
+        auto billid = req.url_params.get("billid");
+        if (!id || !billid) {
+            return crow::response(404, "Please enter the ID.");
+        }
+        int p_id = stoi(id);
+        auto p_match = find_if(patients.begin(), patients.end(), [p_id](Patient& patient) {
+            return patient.id == p_id;
+        });
+        if (p_match == patients.end()) {
+            return crow::response(404, "Patient not found.");
+        }
+        auto billlist = p_match->bill_get();
+        auto b_match = find_if(billlist.begin(), billlist.end(), [billid](Bill& bill) {
+            return bill.billid == billid;
+        });
+
+        if (b_match == billlist.end()) {
+            return crow::response(404, "Bill not found.");
+        }
+        b_match->insurance_submit();
+
+        string list = "[Submit successful: ";
+        for (size_t i = 0; i < billlist.size(); ++i) {
+            list += billlist[i].to_json();
+            if (i < billlist.size() - 1) {
+                list += ", ";
+            }
+        }
+        list += "]";
+        return crow::response(list);
+    });
 
     CROW_ROUTE(app, "/make_appointment/")([&doctors, &patients](const crow::request& req) {
         auto patient_id = req.url_params.get("patient_id");
