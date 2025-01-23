@@ -245,3 +245,186 @@ public:
                "\" }";
     }
 };
+
+
+void createTables(sqlite3* db) {
+    int rc = sqlite3_open("hospital.db", &db);
+    if (rc) {
+        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+    cout << "Opened database successfully!" << endl;
+    const char* sql = R"(
+    CREATE TABLE IF NOT EXISTS patients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        age INTEGER NOT NULL,
+        insurance TEXT NOT NULL
+        );
+
+    CREATE TABLE IF NOT EXISTS doctors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        specialization TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL
+        );
+
+    CREATE TABLE IF NOT EXISTS supply (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        num INTEGER NOT NULL,
+        min_num INTEGER NOT NULL
+        );
+
+
+    CREATE TABLE IF NOT EXISTS appointments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_id INTEGER NOT NULL,
+        doctor_id INTEGER NOT NULL,
+        time TEXT NOT NULL,
+        FOREIGN KEY(patient_id) REFERENCES patients(id),
+        FOREIGN KEY(doctor_id) REFERENCES doctors(id)
+        );
+    )";
+
+    char* errMsg = 0;
+    rc = sqlite3_exec(db, sql, 0, 0, &errMsg);
+    if (rc != SQLITE_OK) {
+        cerr << "SQL error: " << errMsg << endl;
+        sqlite3_free(errMsg);
+    } else {
+        cout << "Tables created successfully!" << endl;
+    }
+}
+
+void executeSQL(sqlite3 *db, const std::string &sql) {
+    char *errMsg = nullptr;
+    if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
+        std::cerr << "SQL Error: " << errMsg << std::endl;
+        sqlite3_free(errMsg);
+    }
+}
+std::vector<Doctor> fetchDoctors(sqlite3 *db) {
+    std::vector<Doctor> doctors;
+    const char *sql = "SELECT id, name, specialization, start_time, end_time FROM doctors;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(db) << std::endl;
+        return doctors;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+        std::string specialty = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
+        std::string work_start = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
+        std::string work_end = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 4));
+
+        doctors.emplace_back(id, name, specialty, work_start, work_end);
+    }
+
+    sqlite3_finalize(stmt);
+    return doctors;
+}
+
+// Fetch all patients from the database
+std::vector<Patient> fetchPatients(sqlite3 *db) {
+    std::vector<Patient> patients;
+    const char *sql = "SELECT id, name, age, insurance FROM patients;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(db) << std::endl;
+        return patients;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+        int age = sqlite3_column_int(stmt, 2);
+        std::string insurance = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
+
+        patients.emplace_back(id, name, age, insurance);
+    }
+
+    sqlite3_finalize(stmt);
+    return patients;
+}
+
+// Fetch all supply from the database
+std::vector<Supply> fetchSupply(sqlite3 *db) {
+    std::vector<Supply> supply;
+    const char *sql = "SELECT id, name, num, min_num FROM supply;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(db) << std::endl;
+        return supply;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+        int num = sqlite3_column_int(stmt, 2);
+        int min_num = sqlite3_column_int(stmt, 3);
+
+        supply.emplace_back(id, name, num, min_num);
+    }
+
+    sqlite3_finalize(stmt);
+    return supply;
+}
+
+void addSupply(sqlite3 *db, const std::string &name, int num, int min_num) {
+    const char *sql = "INSERT INTO supply (name, num, min_num) VALUES (?, ?, ?);";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    if (sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 2, num) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 3, min_num) != SQLITE_OK) {
+        std::cerr << "Error binding values: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
+    } else {
+        std::cout << "New supply added successfully!" << std::endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+void SupplyUp(sqlite3 *db, int id, int new_num) {
+    const char *sql = "UPDATE supply SET num = ? WHERE id = ?;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    if (sqlite3_bind_int(stmt, 1, new_num) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 2, id) != SQLITE_OK) {
+        std::cerr << "Error binding values: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
+    } else {
+        std::cout << "Supply number updated successfully!" << std::endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+
