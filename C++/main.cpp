@@ -9,6 +9,7 @@
 #include <map>
 #include <algorithm>
 #include"classes.h"
+#include <sqlite3.h>
 using namespace std;
 
 int main() {
