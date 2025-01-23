@@ -30,6 +30,70 @@ int main() {
         // Patient(2, "Allison Wern", 44),
         // Patient(3, "Sir Munhausen", 33)
     };
+    std::vector<Supply> supply = {
+    };
+    std::vector<std::string> reminds;
+
+     // Route: Get all supply
+    CROW_ROUTE(app, "/supply")([&supply]() {
+        std::string response = "[";
+        for (size_t i = 0; i < supply.size(); ++i) {
+            response += supply[i].to_json();
+            if (i != supply.size() - 1) response += ", ";
+        }
+        response += "]";
+        return crow::response(response);
+    });
+
+    //Route: Supply entry
+    int supply_id = 1;
+    CROW_ROUTE(app, "/supply_add")([&supply, &supply_id](const crow::request& req) {
+        auto name = req.url_params.get("name");
+        auto num_en = req.url_params.get("num");
+        auto min_num_en = req.url_params.get("min");
+        if (!name || !num_en || !min_num_en) {
+            return crow::response(404, "Please enter data");
+        }
+        int num = stoi(num_en);
+        int min_num = stoi(min_num_en);
+        Supply supply_n(supply_id++, name, num, min_num);
+        supply.emplace_back(supply_n);
+        return crow::response("Supply add successfully, supply ID:" + to_string(supply_n.id));
+    });
+
+    CROW_ROUTE(app, "/supply_up")([&supply, &reminds](const crow::request& req) {
+        auto id_en = req.url_params.get("id");
+        auto num_en = req.url_params.get("n");
+        
+        if (!id_en || !num_en) {
+            return crow::response(404, "Please enter valid data for id and quantity");
+        }
+        int id = stoi(id_en);
+        int num_up = stoi(num_en);
+
+        for (auto& supplyy : supply) {
+            if (supplyy.id == id) {
+                supplyy.num = num_up;
+
+                if (supplyy.track()) {
+                    std::string remind = "Warning: Item with ID " + std::to_string(id) + " is low on stock!";
+                    reminds.push_back(remind);
+                }
+                return crow::response("Supply ID " + std::to_string(id) + "Updated successfully ");
+            }
+        }
+        return crow::response(404, "Supply with ID " + std::to_string(id) + " not found");
+    });
+
+    CROW_ROUTE(app, "/remind")([&reminds]() {
+        std::string response = "[";
+        for (size_t i = 0; i < reminds.size(); ++i) {
+            response += "\"" + reminds[i] + "\"";
+            if (i != reminds.size() - 1) response += ", ";
+        }
+        response += "]";
+        return crow::response(response);
+    });
 
     // Route: Get all doctors
     CROW_ROUTE(app, "/patients")([&patients]() {

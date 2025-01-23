@@ -53,6 +53,31 @@ public:
     }
 };
 
+class Supply {
+public:
+    int id;
+    std::string name;
+    int num;
+    int min_num;
+
+    // Constructor
+    Supply(int id, std::string name, int num, int min_num)
+        : id(id), name(name), num(num), min_num(min_num) {}
+
+    // JSON-like format
+    std::string to_json() const {
+        return "{ \"id\": " + std::to_string(id) +
+               ", \"name\": \"" + name +
+               "\", \"quantity\": " + std::to_string(num) +
+               ", \"minimum value\": " + std::to_string(min_num) +
+               " }";
+    }
+    // Stock low
+    bool track() const {
+        return num < min_num;
+    }
+};
+
 class Patient {
 public:
     int id;                    
