@@ -262,7 +262,7 @@ CROW_ROUTE(app, "/add_prescription/")([&doctors, &patients](const crow::request&
     auto prescription_amount = req.url_params.get("amount");
     auto prescription_duration = req.url_params.get("duration");
 
-    if (!patient_id || !doctors_id || !prescription_name || !prescription_amount || prescription_duration) {
+    if (!patient_id || !doctors_id || !prescription_name || !prescription_amount || !prescription_duration) {
         return crow::response("Please enter the required data");
     }
 

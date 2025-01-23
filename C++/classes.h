@@ -57,12 +57,14 @@ public:
                "\", \"date\": \"" + mid +
                "\", \"detail\": \"" + detail +
                "\", \"Prescriptions\": [";
-        for (int i = 0; i < prescription.size(); ++i) {
+        for (size_t i = 0; i < prescription.size(); ++i) {
             json += prescription[i].to_json();
             if (i < prescription.size() - 1) {
                 json += ", ";
             }
-        }       
+        } 
+        json += "]}";
+        return json;      
     }
 };
 
