@@ -26,7 +26,7 @@ This repository contains a Crow-based web application designed as a project for 
 
 ### Use Case UML
 
-![][(https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Use%20Case%20Diagram.png)](https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Use%20Case%20Diagram.png)
+![](https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Use%20Case%20Diagram.png)
 
 ### Sequence UMLs
 
