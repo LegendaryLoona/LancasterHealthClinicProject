@@ -20,11 +20,11 @@ This repository contains a Crow-based web application designed as a project for 
   
 ## Below you can find our UMLs
 
-### Use Case UML
+### Class UML
 
 ![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Class%20Diagram.png)
 
-### Class UML
+### Use Case UML
 
 ![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Use%20Case%20Diagram.png)
 
