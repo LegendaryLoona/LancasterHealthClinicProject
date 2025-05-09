@@ -41,3 +41,4 @@ This repository contains a Crow-based web application designed as a project for 
 ![](https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Sequence%20Diagram%20for%20Billing%20a%20Patient.png)
 ![](https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Sequence%20Diagram%20for%20Checking%20if%20a%20Patient%20has%20Insurance.png)
 ![](https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Sequence%20Diagram%20for%20Adding%20Supply.png)
+![](https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Sequence%20Diagram%20for%20Updating%20Supply.png)
