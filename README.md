@@ -30,7 +30,7 @@ This repository contains a Crow-based web application designed as a project for 
 
 ### Sequence UMLs
 
-![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20registering%20patients.png)
+![](https://github.com/LegendaryLoona/LancasterHealthClinicProject/blob/main/UMLs/Sequence%20Diagram%20for%20Registering%20a%20Patient.png)
 ![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20creating%20a%20doctor's%20profile.png)
 ![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20booking%20an%20appointment.png)
 ![](https://github.com/LegendaryLoona/AHCM_Lancaster/blob/main/UMLs/Sequence%20Diagram%20for%20viewing%20list%20of%20appointments.png)
