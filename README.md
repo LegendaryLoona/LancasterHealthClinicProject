@@ -17,8 +17,10 @@ This repository contains a Crow-based web application designed as a project for 
 
 ```
 LancasterHealthClinicProject/
-├── C++/                      # Crow app directory
-└── README.md                 # This file
+├── C++                      # Crow app directory
+├── Presentations            # Weekly presentations on the project
+├── UMLs                     # UML diagrams for this project
+└── README.md                # This file
 ```
 
 ## Building and Running
