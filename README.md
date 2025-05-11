@@ -13,6 +13,14 @@ This repository contains a Crow-based web application designed as a project for 
 * [Crow](https://crowcpp.org/master/getting_started/setup/linux/)
 * [SQLite](https://www.sqlite.org/download.html)
 
+## Project Structure
+
+```
+LancasterHealthClinicProject/
+├── C++/                      # Crow app directory
+└── README.md                 # This file
+```
+
 ## Building and Running
 * open your terminal and run: g++ main.cpp -lpthread -lsqlite3
 * after that run: ./a.out
